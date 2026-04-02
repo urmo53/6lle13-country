@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "name": "olle13-country-site",
   "version": "1.0.0",
   "description": "ÕLLE 13 Country stream player",
@@ -8,5 +9,17 @@
   },
   "dependencies": {
     "express": "^4.21.2"
+=======
+  "name": "olle13-country",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "express": "^4.21.0",
+    "puppeteer": "^23.3.0"
+>>>>>>> 712f6855497dd80ef015900b4fdaf26e281a9903
   }
 }

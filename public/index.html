@@ -6,152 +6,186 @@
     <title>ÕLLE 13 Country</title>
     <style>
       :root {
-        --bg-1: #1a120a;
-        --bg-2: #0f0b08;
-        --card: rgba(33, 22, 14, 0.9);
-        --card-2: rgba(48, 32, 20, 0.9);
-        --text: #fff8ef;
-        --muted: #d1bca4;
+        --bg-1: #120c07;
+        --bg-2: #22160d;
+        --panel: rgba(28, 18, 11, 0.82);
+        --panel-2: rgba(44, 28, 16, 0.92);
+        --text: #fff7ee;
+        --muted: #d7bda1;
         --accent: #efb55f;
-        --accent-2: #ffd89a;
-        --border: rgba(255, 222, 173, 0.18);
-        --shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+        --accent-2: #ffe1b0;
+        --border: rgba(255, 222, 173, 0.14);
+        --shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
       }
 
       * {
         box-sizing: border-box;
       }
 
+      html,
       body {
         margin: 0;
-        min-height: 100vh;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      body {
         color: var(--text);
         font-family: Inter, Arial, sans-serif;
         background:
-          radial-gradient(circle at top, rgba(255, 182, 77, 0.18), transparent 32%),
-          linear-gradient(180deg, var(--bg-1), var(--bg-2));
+          radial-gradient(circle at top left, rgba(255, 197, 102, 0.18), transparent 28%),
+          radial-gradient(circle at top right, rgba(255, 176, 77, 0.14), transparent 30%),
+          linear-gradient(135deg, var(--bg-1), var(--bg-2));
       }
 
       .page {
-        max-width: 980px;
-        margin: 0 auto;
-        padding: 32px 20px 40px;
+        width: 100vw;
+        height: 100vh;
+        padding: 34px 42px;
+        display: flex;
+        flex-direction: column;
       }
 
       .hero-title {
-        margin: 0 0 28px;
+        margin: 0 0 24px;
         text-align: center;
-        font-size: clamp(2.2rem, 4vw, 4.4rem);
-        letter-spacing: 0.08em;
+        font-size: clamp(2.8rem, 4vw, 4.8rem);
         font-weight: 900;
+        letter-spacing: 0.12em;
         text-transform: uppercase;
         color: var(--accent-2);
-        text-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+        text-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+        flex: 0 0 auto;
       }
 
       .layout {
+        flex: 1;
         display: grid;
-        grid-template-columns: 450px 450px;
-        justify-content: center;
-        gap: 28px;
+        grid-template-columns: minmax(420px, 45vw) minmax(420px, 1fr);
+        gap: 34px;
+        min-height: 0;
       }
 
       .left-column,
       .right-column {
-        width: 450px;
-        height: 450px;
+        min-height: 0;
       }
 
       .cover-frame {
-        width: 450px;
-        height: 450px;
-        border-radius: 28px;
+        width: 100%;
+        height: 100%;
+        border-radius: 34px;
         overflow: hidden;
         border: 1px solid var(--border);
-        background: var(--card);
+        background: var(--panel);
         box-shadow: var(--shadow);
       }
 
       .cover-frame img {
         width: 100%;
         height: 100%;
-        display: block;
         object-fit: cover;
+        display: block;
       }
 
       .right-column {
-        background: linear-gradient(180deg, var(--card), var(--card-2));
-        border: 1px solid var(--border);
-        border-radius: 28px;
-        box-shadow: var(--shadow);
-        padding: 22px 22px 18px;
         display: flex;
         flex-direction: column;
-        align-items: center;
+        justify-content: space-between;
+        min-height: 0;
+        padding: 34px 34px 28px;
+        border-radius: 34px;
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, var(--panel), var(--panel-2));
+        box-shadow: var(--shadow);
+      }
+
+      .top-info {
         text-align: center;
-        overflow: hidden;
       }
 
       .now-label,
       .previous-label {
         color: var(--muted);
         text-transform: uppercase;
-        letter-spacing: 0.14em;
-        font-size: 0.72rem;
+        letter-spacing: 0.16em;
+        font-size: 0.95rem;
+        font-weight: 700;
       }
 
       .track-title {
-        margin-top: 12px;
-        font-size: clamp(1.4rem, 2vw, 2rem);
-        font-weight: 800;
-        line-height: 1.15;
+        margin-top: 16px;
+        font-size: clamp(2.4rem, 4vw, 4.3rem);
+        line-height: 1.05;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        word-break: break-word;
       }
 
       .track-artist {
-        margin-top: 8px;
+        margin-top: 14px;
         color: var(--accent-2);
-        font-size: 1rem;
-        min-height: 1.2em;
+        font-size: clamp(1.2rem, 2vw, 1.9rem);
+        font-weight: 600;
+        min-height: 1.5em;
+      }
+
+      .middle-controls {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 20px 0;
       }
 
       .play-button {
-        width: 92px;
-        height: 56px;
-        margin-top: 22px;
-        border-radius: 999px;
+        width: 180px;
+        height: 86px;
         border: none;
-        background: radial-gradient(circle at 30% 30%, #ffd89a, #efb55f 55%, #cb8a2f);
+        border-radius: 999px;
+        background: linear-gradient(180deg, #ffd89a, #efb55f);
         color: #2b1706;
-        font-size: 1.5rem;
+        font-size: 2rem;
         font-weight: 900;
         cursor: pointer;
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
-        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.34);
+        transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
       }
 
       .play-button:hover {
-        transform: translateY(-2px) scale(1.02);
+        transform: scale(1.03);
+        filter: brightness(1.04);
       }
 
       .play-button:active {
         transform: scale(0.98);
       }
 
+      .play-button:focus,
+      .play-button:focus-visible {
+        outline: 4px solid #fff2d3;
+        outline-offset: 6px;
+        transform: scale(1.04);
+      }
+
       .visualizer {
         display: flex;
         align-items: flex-end;
-        gap: 7px;
-        height: 64px;
-        margin-top: 20px;
+        justify-content: center;
+        gap: 12px;
+        height: 96px;
+        margin-top: 28px;
       }
 
       .bar {
-        width: 10px;
-        height: 14px;
+        width: 16px;
+        height: 18px;
         border-radius: 999px;
-        background: linear-gradient(180deg, #ffe6b5, #efb55f);
+        background: linear-gradient(180deg, #fff1cf, #efb55f);
         transform-origin: bottom;
-        opacity: 0.5;
+        opacity: 0.35;
+        box-shadow: 0 4px 12px rgba(239, 181, 95, 0.22);
       }
 
       .visualizer.playing .bar {
@@ -159,85 +193,83 @@
         animation: bounce 1s ease-in-out infinite;
       }
 
-      .visualizer.playing .bar:nth-child(1) { animation-duration: 0.92s; }
-      .visualizer.playing .bar:nth-child(2) { animation-duration: 1.18s; }
-      .visualizer.playing .bar:nth-child(3) { animation-duration: 0.84s; }
-      .visualizer.playing .bar:nth-child(4) { animation-duration: 1.05s; }
-      .visualizer.playing .bar:nth-child(5) { animation-duration: 0.95s; }
+      .visualizer.playing .bar:nth-child(1) { animation-duration: 0.88s; }
+      .visualizer.playing .bar:nth-child(2) { animation-duration: 1.12s; }
+      .visualizer.playing .bar:nth-child(3) { animation-duration: 0.82s; }
+      .visualizer.playing .bar:nth-child(4) { animation-duration: 1.02s; }
+      .visualizer.playing .bar:nth-child(5) { animation-duration: 0.94s; }
 
       @keyframes bounce {
-        0%, 100% { transform: scaleY(0.35); }
-        20% { transform: scaleY(0.9); }
-        40% { transform: scaleY(0.55); }
-        60% { transform: scaleY(1.55); }
-        80% { transform: scaleY(0.7); }
+        0%, 100% { transform: scaleY(0.32); }
+        20% { transform: scaleY(0.95); }
+        40% { transform: scaleY(0.52); }
+        60% { transform: scaleY(1.7); }
+        80% { transform: scaleY(0.74); }
       }
 
       .stream-status {
-        margin-top: 8px;
+        margin-top: 14px;
+        min-height: 1.4em;
         color: var(--muted);
-        min-height: 1.2em;
-        font-size: 0.9rem;
+        font-size: 1.05rem;
+        text-align: center;
       }
 
-      .previous-card {
-        width: 100%;
-        margin-top: auto;
-        padding: 12px;
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.04);
+      .bottom-panel {
+        border-radius: 24px;
         border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.04);
+        padding: 18px 20px;
       }
 
       .previous-content {
-        margin-top: 10px;
+        margin-top: 12px;
         display: grid;
-        grid-template-columns: 80px 1fr;
-        gap: 10px;
+        grid-template-columns: 96px 1fr;
+        gap: 14px;
         align-items: center;
-        text-align: left;
       }
 
       .previous-content img {
-        width: 80px;
-        height: 80px;
-        border-radius: 12px;
+        width: 96px;
+        height: 96px;
+        border-radius: 18px;
         object-fit: cover;
         display: block;
       }
 
       .previous-title {
-        font-size: 0.9rem;
-        font-weight: 700;
+        font-size: 1rem;
+        font-weight: 800;
         line-height: 1.2;
       }
 
       .previous-artist {
         margin-top: 6px;
         color: var(--muted);
-        font-size: 0.8rem;
+        font-size: 0.92rem;
         line-height: 1.2;
       }
 
-      @media (max-width: 980px) {
+      @media (max-width: 1280px) {
+        .page {
+          overflow: auto;
+          height: auto;
+          min-height: 100vh;
+        }
+
         .layout {
           grid-template-columns: 1fr;
         }
 
-        .left-column,
-        .right-column,
-        .cover-frame {
-          width: 100%;
-          height: auto;
-        }
-
         .cover-frame {
           aspect-ratio: 1 / 1;
+          height: auto;
+          min-height: 320px;
         }
 
         .right-column {
-          min-height: 450px;
-          height: auto;
+          min-height: 520px;
         }
       }
     </style>
@@ -254,25 +286,29 @@
         </div>
 
         <div class="right-column">
-          <div class="now-label">Hetkel mängib</div>
-          <div class="track-title" id="trackTitle">Laen infot...</div>
-          <div class="track-artist" id="trackArtist"></div>
-
-          <button id="playButton" class="play-button" aria-label="Mängi või peata">
-            <span id="playIcon">▶</span>
-          </button>
-
-          <div class="visualizer" id="visualizer" aria-hidden="true">
-            <span class="bar"></span>
-            <span class="bar"></span>
-            <span class="bar"></span>
-            <span class="bar"></span>
-            <span class="bar"></span>
+          <div class="top-info">
+            <div class="now-label">Hetkel mängib</div>
+            <div class="track-title" id="trackTitle">Laen infot...</div>
+            <div class="track-artist" id="trackArtist"></div>
           </div>
 
-          <div class="stream-status" id="streamStatus">Striim peatatud</div>
+          <div class="middle-controls">
+            <button id="playButton" class="play-button" aria-label="Mängi või peata">
+              <span id="playIcon">▶</span>
+            </button>
 
-          <div class="previous-card">
+            <div class="visualizer" id="visualizer" aria-hidden="true">
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
+            </div>
+
+            <div class="stream-status" id="streamStatus">Striim peatatud</div>
+          </div>
+
+          <div class="bottom-panel">
             <div class="previous-label">Eelmine lugu</div>
             <div class="previous-content">
               <img id="previousCover" src="/pilt.png" alt="Eelmise loo pilt" />
