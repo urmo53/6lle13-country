@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="et">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Õlle13 Country</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+    :root {
+      --text: #ffffff;
+      --text-soft: rgba(255,255,255,0.78);
+      --accent: #f2b233;
+      --shadow-strong: rgba(0,0,0,0.42);
+      --shadow-soft: rgba(0,0,0,0.22);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+
+    body {
+      font-family: Inter, sans-serif;
+      background: #000;
+      color: var(--text);
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    .wallpaper {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .wallpaper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: blur(40px) brightness(0.72);
+      transform: scale(1.1);
+    }
+
+    .wallpaper::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(
+          90deg,
+          rgba(255,255,255,0.02) 0%,
+          rgba(0,0,0,0.08) 38%,
+          rgba(0,0,0,0.18) 100%
+        );
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .container {
+      width: 1040px;
+      max-width: 1040px;
+      display: grid;
+      grid-template-columns: 440px 520px;
+      gap: 80px;
+      align-items: center;
+    }
+
+    .art-wrap {
+      width: 440px;
+      height: 440px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .art {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.46);
+      background: rgba(255,255,255,0.06);
+    }
+
+    .text {
+      width: 520px;
+      min-height: 440px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 28px;
+      align-items: flex-start;
+    }
+
+    .brand {
+      font-size: 64px;
+      font-weight: 800;
+      letter-spacing: -0.05em;
+      line-height: 0.95;
+      color: var(--text);
+      text-shadow:
+        0 3px 18px var(--shadow-strong),
+        0 1px 2px var(--shadow-soft);
+    }
+
+    .track-line {
+      font-size: 34px;
+      font-weight: 800;
+      line-height: 1.12;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      text-shadow:
+        0 3px 18px var(--shadow-strong),
+        0 1px 2px var(--shadow-soft);
+      overflow-wrap: anywhere;
+    }
+
+    .track-line.empty {
+      color: var(--text-soft);
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .play-btn {
+      width: 86px;
+      height: 86px;
+      border-radius: 999px;
+      border: none;
+      background: rgba(255,255,255,0.10);
+      backdrop-filter: blur(10px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow:
+        0 12px 30px rgba(0,0,0,0.28),
+        inset 0 0 0 1px rgba(255,255,255,0.12);
+      transition: transform 140ms ease, background 140ms ease;
+    }
+
+    .play-btn:hover {
+      transform: scale(1.03);
+      background: rgba(255,255,255,0.14);
+    }
+
+    .play-btn:active {
+      transform: scale(0.98);
+    }
+
+    .play-btn:focus-visible {
+      outline: 3px solid rgba(255,255,255,0.75);
+      outline-offset: 4px;
+    }
+
+    .icon-play,
+    .icon-stop {
+      display: inline-block;
+    }
+
+    .icon-play {
+      width: 0;
+      height: 0;
+      border-left: 24px solid var(--accent);
+      border-top: 15px solid transparent;
+      border-bottom: 15px solid transparent;
+      margin-left: 5px;
+    }
+
+    .icon-stop {
+      width: 26px;
+      height: 26px;
+      background: var(--accent);
+      border-radius: 6px;
+    }
+
+    .waves {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      height: 28px;
+    }
+
+    .waves span {
+      display: inline-block;
+      width: 5px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 40%, transparent);
+      transform-origin: bottom center;
+      animation: wave 1s infinite ease-in-out;
+      animation-play-state: paused;
+      opacity: 0.45;
+    }
+
+    .playing .waves span {
+      animation-play-state: running;
+      opacity: 1;
+    }
+
+    .waves span:nth-child(1) { height: 10px; animation-delay: 0s; }
+    .waves span:nth-child(2) { height: 18px; animation-delay: 0.15s; }
+    .waves span:nth-child(3) { height: 13px; animation-delay: 0.3s; }
+    .waves span:nth-child(4) { height: 22px; animation-delay: 0.45s; }
+    .waves span:nth-child(5) { height: 15px; animation-delay: 0.6s; }
+
+    @keyframes wave {
+      0%, 100% { transform: scaleY(0.6); opacity: 0.6; }
+      50% { transform: scaleY(1.4); opacity: 1; }
+    }
+
+    .status {
+      font-size: 14px;
+      color: var(--text-soft);
+      min-height: 20px;
+    }
+
+    audio { display: none; }
+
+    @media (max-width: 900px) {
+      body { overflow: auto; }
+
+      .app {
+        height: auto;
+        min-height: 100vh;
+        padding: 30px 20px;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 520px;
+        grid-template-columns: 1fr;
+        gap: 36px;
+        text-align: center;
+      }
+
+      .art-wrap, .text {
+        width: 100%;
+        height: auto;
+        min-height: auto;
+      }
+
+      .text {
+        align-items: center;
+      }
+
+      .controls {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wallpaper">
+    <img id="bg" src="/images/pilt.png" alt="">
+  </div>
+
+  <div class="app">
+    <div class="container">
+      <div class="art-wrap">
+        <img id="art" class="art" src="/images/pilt.png" alt="Õlle13-Country artwork" crossorigin="anonymous">
+      </div>
+
+      <div class="text">
+        <div class="brand">Õlle13 Country</div>
+
+        <div id="trackLine" class="track-line empty">Õlle13 Country - Hetkel eetris</div>
+
+        <div id="controls" class="controls">
+          <button id="playBtn" class="play-btn" type="button" aria-label="Käivita või peata striim">
+            <span id="btnIcon" class="icon-play"></span>
+          </button>
+
+          <div class="waves" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+
+        <div id="status" class="status"></div>
+      </div>
+    </div>
+  </div>
+
+  <audio id="audio" playsinline></audio>
+
+  <script>
+    const FALLBACK = "/images/pilt.png";
+    const STREAM_URL = "https://router.euddn.net/8103046e16b71d15d692b57c187875c7/dc_duocountry.aac";
+
+    const audio = document.getElementById("audio");
+    const playBtn = document.getElementById("playBtn");
+    const btnIcon = document.getElementById("btnIcon");
+    const controls = document.getElementById("controls");
+    const artEl = document.getElementById("art");
+    const bgEl = document.getElementById("bg");
+    const trackLineEl = document.getElementById("trackLine");
+    const statusEl = document.getElementById("status");
+
+    let hls = null;
+    let currentArtwork = null;
+    let streamInitialized = false;
+
+    function setTrackLine(artist, title) {
+      const a = String(artist || "").trim();
+      const t = String(title || "").trim();
+
+      if (a && t) {
+        trackLineEl.textContent = `${a} - ${t}`;
+        trackLineEl.classList.remove("empty");
+        return;
+      }
+
+      if (t) {
+        trackLineEl.textContent = t;
+        trackLineEl.classList.remove("empty");
+        return;
+      }
+
+      trackLineEl.textContent = "Õlle13 Country - Hetkel eetris";
+      trackLineEl.classList.add("empty");
+    }
+
+    async function preloadImage(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+      });
+    }
+
+    function setTheme({ text, textSoft, accent, shadowStrong, shadowSoft }) {
+      const root = document.documentElement;
+      root.style.setProperty("--text", text);
+      root.style.setProperty("--text-soft", textSoft);
+      root.style.setProperty("--accent", accent);
+      root.style.setProperty("--shadow-strong", shadowStrong);
+      root.style.setProperty("--shadow-soft", shadowSoft);
+    }
+
+    function pickTheme(r, g, b) {
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      const isLight = luminance > 0.68;
+
+      if (isLight) {
+        return {
+          text: "#111111",
+          textSoft: "rgba(17,17,17,0.76)",
+          accent: "#6b4a00",
+          shadowStrong: "rgba(255,255,255,0.16)",
+          shadowSoft: "rgba(255,255,255,0.08)"
+        };
+      }
+
+      return {
+        text: "#ffffff",
+        textSoft: "rgba(255,255,255,0.72)",
+        accent: "#f2b233",
+        shadowStrong: "rgba(0,0,0,0.46)",
+        shadowSoft: "rgba(0,0,0,0.22)"
+      };
+    }
+
+    function applyThemeFromImage(img) {
+      try {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d", { willReadFrequently: true });
+        const w = 24;
+        const h = 24;
+
+        canvas.width = w;
+        canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
+
+        const { data } = ctx.getImageData(0, 0, w, h);
+        let r = 0, g = 0, b = 0, count = 0;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const alpha = data[i + 3];
+          if (alpha < 120) continue;
+          r += data[i];
+          g += data[i + 1];
+          b += data[i + 2];
+          count++;
+        }
+
+        if (!count) throw new Error("No readable pixels");
+
+        setTheme(pickTheme(
+          Math.round(r / count),
+          Math.round(g / count),
+          Math.round(b / count)
+        ));
+      } catch {
+        setTheme({
+          text: "#ffffff",
+          textSoft: "rgba(255,255,255,0.72)",
+          accent: "#f2b233",
+          shadowStrong: "rgba(0,0,0,0.46)",
+          shadowSoft: "rgba(0,0,0,0.22)"
+        });
+      }
+    }
+
+    async function updateArtwork(artwork) {
+      const src = artwork || FALLBACK;
+      if (src === currentArtwork) return;
+      currentArtwork = src;
+
+      artEl.src = src;
+      bgEl.src = src;
+
+      try {
+        const img = await preloadImage(src);
+        applyThemeFromImage(img);
+      } catch {
+        setTheme({
+          text: "#ffffff",
+          textSoft: "rgba(255,255,255,0.72)",
+          accent: "#f2b233",
+          shadowStrong: "rgba(0,0,0,0.46)",
+          shadowSoft: "rgba(0,0,0,0.22)"
+        });
+      }
+    }
+
+    function updateButtonState() {
+      const isPlaying = !audio.paused;
+      controls.classList.toggle("playing", isPlaying);
+      btnIcon.className = isPlaying ? "icon-stop" : "icon-play";
+
+    }
+
+    function initStream() {
+      if (streamInitialized) return;
+      streamInitialized = true;
+
+      if (audio.canPlayType("application/vnd.apple.mpegurl")) {
+        audio.src = STREAM_URL;
+        return;
+      }
+
+      if (window.Hls && window.Hls.isSupported()) {
+        hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: false,
+        });
+
+        hls.loadSource(STREAM_URL);
+        hls.attachMedia(audio);
+
+        hls.on(Hls.Events.ERROR, function (_event, data) {
+          if (data && data.fatal) {
+            statusEl.textContent = "Striimi avamine ebaõnnestus";
+            console.log("HLS error:", data);
+          }
+        });
+
+        return;
+      }
+
+      statusEl.textContent = "See brauser ei toeta striimi";
+    }
+
+    playBtn.addEventListener("click", async () => {
+      try {
+        initStream();
+
+        if (audio.paused) {
+          await audio.play();
+        } else {
+          audio.pause();
+        }
+
+        updateButtonState();
+      } catch (e) {
+        statusEl.textContent = "Striimi ei saanud käivitada";
+        console.log("button error", e);
+      }
+    });
+
+    audio.addEventListener("play", updateButtonState);
+    audio.addEventListener("pause", updateButtonState);
+    audio.addEventListener("ended", updateButtonState);
+
+    async function update() {
+      try {
+        const res = await fetch("/api/station", {
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache" }
+        });
+
+        const data = await res.json();
+
+        setTrackLine(data.artist || "Õlle13 Country", data.title || "Hetkel eetris");
+        await updateArtwork(data.artwork || FALLBACK);
+      } catch (e) {
+        console.log("update error", e);
+        setTrackLine("Õlle13 Country", "Hetkel eetris");
+      }
+    }
+
+    updateButtonState();
+    update();
+    setInterval(update, 15000);
+  </script>
+</body>
+</html>
