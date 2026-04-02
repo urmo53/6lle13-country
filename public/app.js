@@ -26,52 +26,73 @@ async function loadState() {
     const res = await fetch("/api/state");
     const data = await res.json();
 
+    if (data.playbackUrl && !player.src) {
+      player.src = data.playbackUrl;
+    }
+
     if (data.current) {
-      trackTitle.textContent = data.current.title || data.current.nowPlaying || "Tundmatu lugu";
+      trackTitle.textContent =
+        data.current.title || data.current.nowPlaying || "Tundmatu lugu";
       trackArtist.textContent = data.current.artist || "";
-      mainCover.src = data.current.imageUrl || "/pilt.png";
+    } else {
+      trackTitle.textContent = "Lugu puudub";
+      trackArtist.textContent = "";
     }
 
     if (data.previous) {
-      previousTitle.textContent = data.previous.title || data.previous.nowPlaying || "—";
+      previousTitle.textContent =
+        data.previous.title || data.previous.nowPlaying || "—";
       previousArtist.textContent = data.previous.artist || "";
-      previousCover.src = data.previous.imageUrl || "/pilt.png";
+    } else {
+      previousTitle.textContent = "—";
+      previousArtist.textContent = "";
     }
 
-    if (data.error && !data.current) {
-      trackTitle.textContent = "Metadata pole saadaval";
-      trackArtist.textContent = data.error;
+    if (!mainCover.getAttribute("src")) {
       mainCover.src = "/pilt.png";
+    }
+    if (!previousCover.getAttribute("src")) {
+      previousCover.src = "/pilt.png";
     }
   } catch (err) {
     trackTitle.textContent = "Andmete laadimine ebaõnnestus";
-    trackArtist.textContent = err.message || String(err);
+    trackArtist.textContent = "";
   }
 }
 
 playButton.addEventListener("click", async () => {
   try {
     if (player.paused) {
+      streamStatus.textContent = "Laen striimi...";
       await player.play();
-      setPlayingUI(true);
     } else {
       player.pause();
-      setPlayingUI(false);
     }
   } catch (err) {
-    streamStatus.textContent = "Esitust ei saanud käivitada";
+    setPlayingUI(false);
+    streamStatus.textContent = "Ei saa striimi laadida";
   }
 });
 
 player.addEventListener("play", () => setPlayingUI(true));
+player.addEventListener("playing", () => setPlayingUI(true));
 player.addEventListener("pause", () => setPlayingUI(false));
 player.addEventListener("ended", () => setPlayingUI(false));
+
 player.addEventListener("waiting", () => {
-  if (isPlaying) streamStatus.textContent = "Laen striimi...";
+  if (isPlaying) {
+    streamStatus.textContent = "Laen striimi...";
+  }
 });
-player.addEventListener("playing", () => {
-  if (isPlaying) streamStatus.textContent = "Striim mängib";
+
+player.addEventListener("stalled", () => {
+  streamStatus.textContent = "Striim jäi seisma";
+});
+
+player.addEventListener("error", () => {
+  setPlayingUI(false);
+  streamStatus.textContent = "Ei saa striimi laadida";
 });
 
 loadState();
-setInterval(loadState, 12000);
+setInterval(loadState, 10000);
