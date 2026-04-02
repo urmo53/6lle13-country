@@ -1,0 +1,227 @@
+:root {
+  --bg-1: #1a120a;
+  --bg-2: #0f0b08;
+  --card: rgba(33, 22, 14, 0.9);
+  --card-2: rgba(48, 32, 20, 0.9);
+  --text: #fff8ef;
+  --muted: #d1bca4;
+  --accent: #efb55f;
+  --accent-2: #ffd89a;
+  --border: rgba(255, 222, 173, 0.18);
+  --shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: Inter, Arial, sans-serif;
+  background:
+    radial-gradient(circle at top, rgba(255, 182, 77, 0.18), transparent 32%),
+    linear-gradient(180deg, var(--bg-1), var(--bg-2));
+}
+
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 32px 20px 40px;
+}
+
+.hero-title {
+  margin: 0 0 28px;
+  text-align: center;
+  font-size: clamp(2.2rem, 4vw, 4.4rem);
+  letter-spacing: 0.08em;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: var(--accent-2);
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 450px 450px;
+  justify-content: center;
+  gap: 28px;
+}
+
+.left-column,
+.right-column {
+  min-height: 640px;
+}
+
+.cover-frame {
+  width: 450px;
+  height: 450px;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow);
+}
+
+.cover-frame img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.right-column {
+  background: linear-gradient(180deg, var(--card), var(--card-2));
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+  padding: 28px 28px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.now-label,
+.previous-label {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.82rem;
+}
+
+.track-title {
+  margin-top: 14px;
+  font-size: clamp(1.7rem, 3vw, 2.8rem);
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.track-artist {
+  margin-top: 10px;
+  color: var(--accent-2);
+  font-size: 1.15rem;
+  min-height: 1.4em;
+}
+
+.play-button {
+  width: 112px;
+  height: 112px;
+  margin-top: 28px;
+  border-radius: 999px;
+  border: none;
+  background: radial-gradient(circle at 30% 30%, #ffd89a, #efb55f 55%, #cb8a2f);
+  color: #2b1706;
+  font-size: 2.1rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.play-button:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.play-button:active {
+  transform: scale(0.98);
+}
+
+.visualizer {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 84px;
+  margin-top: 30px;
+}
+
+.bar {
+  width: 12px;
+  height: 18px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffe6b5, #efb55f);
+  transform-origin: bottom;
+  opacity: 0.5;
+}
+
+.visualizer.playing .bar {
+  opacity: 1;
+  animation: bounce 1s ease-in-out infinite;
+}
+
+.visualizer.playing .bar:nth-child(1) { animation-duration: 0.92s; }
+.visualizer.playing .bar:nth-child(2) { animation-duration: 1.18s; }
+.visualizer.playing .bar:nth-child(3) { animation-duration: 0.84s; }
+.visualizer.playing .bar:nth-child(4) { animation-duration: 1.05s; }
+.visualizer.playing .bar:nth-child(5) { animation-duration: 0.95s; }
+
+@keyframes bounce {
+  0%, 100% { transform: scaleY(0.35); }
+  20% { transform: scaleY(0.9); }
+  40% { transform: scaleY(0.55); }
+  60% { transform: scaleY(1.55); }
+  80% { transform: scaleY(0.7); }
+}
+
+.stream-status {
+  margin-top: 10px;
+  color: var(--muted);
+  min-height: 1.3em;
+}
+
+.previous-card {
+  width: 100%;
+  margin-top: auto;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+}
+
+.previous-content {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 14px;
+  align-items: center;
+  text-align: left;
+}
+
+.previous-content img {
+  width: 110px;
+  height: 110px;
+  border-radius: 16px;
+  object-fit: cover;
+  display: block;
+}
+
+.previous-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.previous-artist {
+  margin-top: 8px;
+  color: var(--muted);
+}
+
+@media (max-width: 980px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .cover-frame,
+  .left-column,
+  .right-column {
+    width: 100%;
+  }
+
+  .cover-frame {
+    height: min(78vw, 450px);
+  }
+
+  .right-column {
+    min-height: auto;
+  }
+}
