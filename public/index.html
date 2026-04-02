@@ -8,14 +8,13 @@
       :root {
         --bg-1: #120c07;
         --bg-2: #22160d;
-        --panel: rgba(28, 18, 11, 0.86);
-        --panel-2: rgba(44, 28, 16, 0.94);
+        --panel: rgba(28, 18, 11, 0.9);
+        --panel-2: rgba(44, 28, 16, 0.96);
         --text: #fff7ee;
         --muted: #d7bda1;
-        --accent: #efb55f;
         --accent-2: #ffe1b0;
         --border: rgba(255, 222, 173, 0.14);
-        --shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        --shadow: 0 16px 40px rgba(0, 0, 0, 0.38);
       }
 
       * {
@@ -25,52 +24,60 @@
       html,
       body {
         margin: 0;
-        min-height: 100%;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
       }
 
       body {
         color: var(--text);
         font-family: Inter, Arial, sans-serif;
         background:
-          radial-gradient(circle at top left, rgba(255, 197, 102, 0.16), transparent 28%),
-          radial-gradient(circle at top right, rgba(255, 176, 77, 0.12), transparent 30%),
+          radial-gradient(circle at top left, rgba(255, 197, 102, 0.12), transparent 28%),
           linear-gradient(135deg, var(--bg-1), var(--bg-2));
-        overflow-x: hidden;
-        overflow-y: auto;
       }
 
       .page {
-        width: 100%;
-        min-height: 100vh;
-        max-width: 1680px;
-        margin: 0 auto;
-        padding: 28px 32px 32px;
+        width: 100vw;
+        height: 100vh;
+        padding: 24px 32px;
+        display: flex;
+        flex-direction: column;
       }
 
       .hero-title {
-        margin: 0 0 22px;
+        margin: 0 0 18px;
         text-align: center;
-        font-size: clamp(2rem, 3vw, 3.8rem);
+        font-size: 42px;
+        line-height: 1;
         font-weight: 900;
         letter-spacing: 0.12em;
         text-transform: uppercase;
         color: var(--accent-2);
-        text-shadow: 0 6px 18px rgba(0, 0, 0, 0.42);
+        text-shadow: 0 4px 14px rgba(0, 0, 0, 0.42);
+        flex: 0 0 auto;
       }
 
       .layout {
+        flex: 1;
         display: grid;
-        grid-template-columns: minmax(320px, 700px) minmax(320px, 700px);
-        justify-content: center;
-        gap: 28px;
-        align-items: start;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        align-items: stretch;
+        min-height: 0;
+      }
+
+      .left-column,
+      .right-column {
+        min-width: 0;
+        min-height: 0;
       }
 
       .cover-frame {
         width: 100%;
-        aspect-ratio: 1 / 1;
-        max-height: 700px;
-        border-radius: 28px;
+        height: 100%;
+        max-height: 760px;
+        border-radius: 24px;
         overflow: hidden;
         border: 1px solid var(--border);
         background: var(--panel);
@@ -80,19 +87,20 @@
       .cover-frame img {
         width: 100%;
         height: 100%;
-        object-fit: cover;
         display: block;
+        object-fit: cover;
       }
 
       .right-column {
-        min-height: 700px;
-        border-radius: 28px;
+        border-radius: 24px;
         border: 1px solid var(--border);
         background: linear-gradient(180deg, var(--panel), var(--panel-2));
         box-shadow: var(--shadow);
-        padding: 26px 26px 20px;
+        padding: 22px 22px 18px;
         display: flex;
         flex-direction: column;
+        justify-content: space-between;
+        min-height: 0;
       }
 
       .top-info {
@@ -103,26 +111,26 @@
       .previous-label {
         color: var(--muted);
         text-transform: uppercase;
-        letter-spacing: 0.16em;
-        font-size: 0.82rem;
+        letter-spacing: 0.14em;
+        font-size: 13px;
         font-weight: 700;
       }
 
       .track-title {
-        margin-top: 14px;
-        font-size: clamp(1.8rem, 2.8vw, 3.4rem);
-        line-height: 1.08;
+        margin-top: 12px;
+        font-size: 42px;
+        line-height: 1.05;
         font-weight: 900;
         letter-spacing: -0.02em;
         word-break: break-word;
       }
 
       .track-artist {
-        margin-top: 12px;
+        margin-top: 10px;
         color: var(--accent-2);
-        font-size: clamp(1rem, 1.6vw, 1.5rem);
+        font-size: 22px;
         font-weight: 600;
-        min-height: 1.4em;
+        min-height: 28px;
       }
 
       .middle-controls {
@@ -130,30 +138,19 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        margin: 20px 0 18px;
       }
 
       .play-button {
-        width: 132px;
-        height: 62px;
+        width: 120px;
+        height: 54px;
         border: none;
         border-radius: 999px;
         background: linear-gradient(180deg, #ffd89a, #efb55f);
         color: #2b1706;
-        font-size: 1.55rem;
+        font-size: 28px;
         font-weight: 900;
         cursor: pointer;
-        box-shadow: 0 14px 28px rgba(0, 0, 0, 0.34);
-        transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
-      }
-
-      .play-button:hover {
-        transform: scale(1.03);
-        filter: brightness(1.04);
-      }
-
-      .play-button:active {
-        transform: scale(0.98);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.32);
       }
 
       .play-button:focus,
@@ -166,19 +163,18 @@
         display: flex;
         align-items: flex-end;
         justify-content: center;
-        gap: 10px;
-        height: 72px;
-        margin-top: 22px;
+        gap: 9px;
+        height: 58px;
+        margin-top: 18px;
       }
 
       .bar {
-        width: 14px;
-        height: 16px;
+        width: 12px;
+        height: 14px;
         border-radius: 999px;
         background: linear-gradient(180deg, #fff1cf, #efb55f);
         transform-origin: bottom;
         opacity: 0.35;
-        box-shadow: 0 4px 12px rgba(239, 181, 95, 0.22);
       }
 
       .visualizer.playing .bar {
@@ -196,58 +192,81 @@
         0%, 100% { transform: scaleY(0.32); }
         20% { transform: scaleY(0.95); }
         40% { transform: scaleY(0.52); }
-        60% { transform: scaleY(1.55); }
+        60% { transform: scaleY(1.4); }
         80% { transform: scaleY(0.74); }
       }
 
       .stream-status {
-        margin-top: 12px;
-        min-height: 1.4em;
+        margin-top: 10px;
+        min-height: 24px;
         color: var(--muted);
-        font-size: 0.98rem;
+        font-size: 16px;
         text-align: center;
       }
 
       .bottom-panel {
-        margin-top: auto;
-        border-radius: 20px;
+        border-radius: 18px;
         border: 1px solid var(--border);
         background: rgba(255, 255, 255, 0.04);
-        padding: 14px 16px;
+        padding: 12px 14px;
       }
 
       .previous-content {
         margin-top: 10px;
         display: grid;
-        grid-template-columns: 82px 1fr;
-        gap: 12px;
+        grid-template-columns: 74px 1fr;
+        gap: 10px;
         align-items: center;
       }
 
       .previous-content img {
-        width: 82px;
-        height: 82px;
-        border-radius: 14px;
+        width: 74px;
+        height: 74px;
+        border-radius: 12px;
         object-fit: cover;
         display: block;
       }
 
       .previous-title {
-        font-size: 0.92rem;
+        font-size: 16px;
         font-weight: 800;
-        line-height: 1.2;
+        line-height: 1.15;
       }
 
       .previous-artist {
-        margin-top: 5px;
+        margin-top: 4px;
         color: var(--muted);
-        font-size: 0.82rem;
-        line-height: 1.2;
+        font-size: 13px;
+        line-height: 1.15;
       }
 
-      @media (max-width: 1280px) {
+      @media (max-width: 1400px) {
+        .hero-title {
+          font-size: 34px;
+        }
+
+        .track-title {
+          font-size: 32px;
+        }
+
+        .track-artist {
+          font-size: 18px;
+        }
+
+        .cover-frame {
+          max-height: none;
+        }
+      }
+
+      @media (max-width: 1100px) {
+        html,
+        body {
+          overflow: auto;
+        }
+
         .page {
-          padding: 20px 18px 24px;
+          height: auto;
+          min-height: 100vh;
         }
 
         .layout {
@@ -255,11 +274,12 @@
         }
 
         .cover-frame {
-          max-height: none;
+          aspect-ratio: 1 / 1;
+          height: auto;
         }
 
         .right-column {
-          min-height: auto;
+          min-height: 480px;
         }
       }
     </style>
