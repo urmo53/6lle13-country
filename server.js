@@ -7,15 +7,21 @@ const { URL } = require("url");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const STREAM_URL =
+// Metadata loeme HTTP MP3 striimist
+const METADATA_STREAM_URL =
   "http://router.euddn.net/8103046e16b71d15d692b57c187875c7/dc_duocountry.mp3";
+
+// Mängimiseks kasutame HTTPS AAC striimi
+const PLAYBACK_STREAM_URL =
+  "https://router.euddn.net/8103046e16b71d15d692b57c187875c7/dc_duocountry.aac";
+
 const PLACEHOLDER_IMAGE = "/pilt.png";
 const POLL_INTERVAL_MS = 12000;
 
 app.use(express.static(path.join(__dirname, "public")));
 
 const state = {
-  streamUrl: STREAM_URL,
+  playbackUrl: PLAYBACK_STREAM_URL,
   current: null,
   previous: null,
   lastUpdated: null,
@@ -85,7 +91,11 @@ function fetchIcyMetadata(streamUrl, timeoutMs = 15000, redirectsLeft = 5) {
       (res) => {
         const status = res.statusCode || 0;
 
-        if ([301, 302, 303, 307, 308].includes(status) && res.headers.location && redirectsLeft > 0) {
+        if (
+          [301, 302, 303, 307, 308].includes(status) &&
+          res.headers.location &&
+          redirectsLeft > 0
+        ) {
           const nextUrl = new URL(res.headers.location, streamUrl).toString();
           res.resume();
           return finish(fetchIcyMetadata(nextUrl, timeoutMs, redirectsLeft - 1));
@@ -247,7 +257,7 @@ async function findArtwork(artist, title) {
         link: item.trackViewUrl || item.collectionViewUrl || null,
       };
     }
-  } catch (err) {}
+  } catch {}
 
   try {
     const deezerQuery = encodeURIComponent([artist, title].filter(Boolean).join(" "));
@@ -274,21 +284,20 @@ async function findArtwork(artist, title) {
         return {
           imageUrl: cover,
           source: "deezer",
-          link: item?.link || item?.album?.tracklist || null,
+          link: item?.link || null,
         };
       }
     }
-  } catch (err) {}
+  } catch {}
 
   return { imageUrl: PLACEHOLDER_IMAGE, source: "fallback" };
 }
 
 async function hydrateTrack(meta) {
-  if (!meta?.nowPlaying) {
-    return null;
-  }
+  if (!meta?.nowPlaying) return null;
 
   const artwork = await findArtwork(meta.artist, meta.title);
+
   return {
     nowPlaying: meta.nowPlaying,
     artist: meta.artist,
@@ -304,7 +313,7 @@ async function updateState() {
   state.updating = true;
 
   try {
-    const meta = await fetchIcyMetadata(STREAM_URL);
+    const meta = await fetchIcyMetadata(METADATA_STREAM_URL);
 
     if (!meta.ok || !meta.nowPlaying) {
       state.error = meta.error || "Metadata puudub";
