@@ -20,10 +20,11 @@ let defaultPlaybackUrl = "";
 let activePlaybackUrl = "";
 let isPlaying = false;
 
-let interstitialPlayedForCurrentTrigger = false;
-let waitingForInterstitialToEnd = false;
-let pendingStreamAfterInterstitial = "";
 let specialModeActive = false;
+let interstitialPlayedForCurrentTrigger = false;
+let switchingWithInterstitial = false;
+
+let interstitialAudio = null;
 
 function normalizeText(value) {
   return String(value || "")
@@ -45,14 +46,27 @@ function setPlayingUI(playing) {
   streamStatus.textContent = playing ? "Striim mängib" : "Striim peatatud";
 }
 
-async function setSourceAndMaybePlay(url, forcePlay = false, statusText = "Laen striimi...") {
+function stopInterstitial() {
+  if (interstitialAudio) {
+    try {
+      interstitialAudio.pause();
+      interstitialAudio.src = "";
+    } catch (_) {}
+    interstitialAudio = null;
+  }
+}
+
+async function playMainStream(url, forcePlay = false, statusText = "Laen striimi...") {
   if (!url) return;
 
-  const shouldPlay = forcePlay || !player.paused || isPlaying;
+  const shouldPlay = forcePlay || isPlaying || !player.paused;
 
   activePlaybackUrl = url;
-  player.src = url;
-  player.load();
+
+  if (player.src !== url) {
+    player.src = url;
+    player.load();
+  }
 
   if (shouldPlay) {
     try {
@@ -66,17 +80,80 @@ async function setSourceAndMaybePlay(url, forcePlay = false, statusText = "Laen 
   }
 }
 
-async function playInterstitialThenStream(streamUrl) {
-  if (!streamUrl) return;
+async function playInterstitialThenFallback() {
+  if (switchingWithInterstitial) return;
 
-  pendingStreamAfterInterstitial = streamUrl;
-  waitingForInterstitialToEnd = true;
+  switchingWithInterstitial = true;
 
-  await setSourceAndMaybePlay(
-    INTERSTITIAL_MP3_URL,
-    true,
-    "Mängin vaheklippi..."
+  const shouldResumeAfterJingle = isPlaying || !player.paused;
+
+  try {
+    player.pause();
+  } catch (_) {}
+
+  stopInterstitial();
+
+  interstitialAudio = new Audio(INTERSTITIAL_MP3_URL);
+  interstitialAudio.preload = "auto";
+  interstitialAudio.crossOrigin = "anonymous";
+
+  interstitialAudio.addEventListener(
+    "ended",
+    async () => {
+      stopInterstitial();
+      switchingWithInterstitial = false;
+      await playMainStream(
+        FALLBACK_PLAYBACK_URL,
+        shouldResumeAfterJingle,
+        "Laen uut striimi..."
+      );
+    },
+    { once: true }
   );
+
+  interstitialAudio.addEventListener(
+    "error",
+    async () => {
+      stopInterstitial();
+      switchingWithInterstitial = false;
+      await playMainStream(
+        FALLBACK_PLAYBACK_URL,
+        shouldResumeAfterJingle,
+        "Laen uut striimi..."
+      );
+    },
+    { once: true }
+  );
+
+  try {
+    streamStatus.textContent = "Mängin vaheklippi...";
+    await interstitialAudio.play();
+    setPlayingUI(true);
+  } catch (err) {
+    stopInterstitial();
+    switchingWithInterstitial = false;
+    await playMainStream(
+      FALLBACK_PLAYBACK_URL,
+      shouldResumeAfterJingle,
+      "Laen uut striimi..."
+    );
+  }
+}
+
+async function switchToNormalStreamIfNeeded() {
+  if (!defaultPlaybackUrl) return;
+  if (switchingWithInterstitial) return;
+  if (activePlaybackUrl === defaultPlaybackUrl) return;
+
+  stopInterstitial();
+  await playMainStream(defaultPlaybackUrl, isPlaying, "Vahetan striimi...");
+}
+
+async function switchToFallbackWithInterstitialIfNeeded() {
+  if (switchingWithInterstitial) return;
+  if (activePlaybackUrl === FALLBACK_PLAYBACK_URL && !interstitialAudio) return;
+
+  await playInterstitialThenFallback();
 }
 
 async function loadState() {
@@ -86,6 +163,9 @@ async function loadState() {
 
     if (data.playbackUrl) {
       defaultPlaybackUrl = data.playbackUrl;
+      if (!activePlaybackUrl) {
+        activePlaybackUrl = defaultPlaybackUrl;
+      }
     }
 
     if (data.current) {
@@ -102,30 +182,16 @@ async function loadState() {
           interstitialPlayedForCurrentTrigger = false;
         }
 
-        if (!interstitialPlayedForCurrentTrigger && !waitingForInterstitialToEnd) {
+        if (!interstitialPlayedForCurrentTrigger) {
           interstitialPlayedForCurrentTrigger = true;
-          await playInterstitialThenStream(FALLBACK_PLAYBACK_URL);
-        } else if (
-          !waitingForInterstitialToEnd &&
-          activePlaybackUrl !== FALLBACK_PLAYBACK_URL
-        ) {
-          await setSourceAndMaybePlay(
-            FALLBACK_PLAYBACK_URL,
-            false,
-            "Vahetan striimi..."
-          );
+          await switchToFallbackWithInterstitialIfNeeded();
+        } else if (!switchingWithInterstitial && activePlaybackUrl !== FALLBACK_PLAYBACK_URL) {
+          await playMainStream(FALLBACK_PLAYBACK_URL, isPlaying, "Vahetan striimi...");
         }
       } else {
         specialModeActive = false;
         interstitialPlayedForCurrentTrigger = false;
-
-        if (!waitingForInterstitialToEnd && defaultPlaybackUrl && activePlaybackUrl !== defaultPlaybackUrl) {
-          await setSourceAndMaybePlay(
-            defaultPlaybackUrl,
-            false,
-            "Vahetan striimi..."
-          );
-        }
+        await switchToNormalStreamIfNeeded();
       }
     } else {
       trackTitle.textContent = "Laen...";
@@ -156,18 +222,24 @@ async function loadState() {
 
 playButton.addEventListener("click", async () => {
   try {
+    if (interstitialAudio && !interstitialAudio.paused) {
+      interstitialAudio.pause();
+      stopInterstitial();
+      switchingWithInterstitial = false;
+      setPlayingUI(false);
+      return;
+    }
+
     if (!player.src) {
       const initialUrl = activePlaybackUrl || defaultPlaybackUrl;
       if (initialUrl) {
-        await setSourceAndMaybePlay(initialUrl, false, "Laen striimi...");
-        return;
+        player.src = initialUrl;
+        player.load();
       }
     }
 
     if (player.paused) {
-      streamStatus.textContent = waitingForInterstitialToEnd
-        ? "Mängin vaheklippi..."
-        : "Laen striimi...";
+      streamStatus.textContent = "Laen striimi...";
       await player.play();
       setPlayingUI(true);
     } else {
@@ -180,42 +252,47 @@ playButton.addEventListener("click", async () => {
   }
 });
 
-player.addEventListener("play", () => setPlayingUI(true));
-player.addEventListener("playing", () => setPlayingUI(true));
+player.addEventListener("play", () => {
+  if (!switchingWithInterstitial) {
+    setPlayingUI(true);
+  }
+});
+
+player.addEventListener("playing", () => {
+  if (!switchingWithInterstitial) {
+    setPlayingUI(true);
+  }
+});
+
 player.addEventListener("pause", () => {
-  if (!waitingForInterstitialToEnd) {
+  if (!switchingWithInterstitial && !(interstitialAudio && !interstitialAudio.paused)) {
     setPlayingUI(false);
   }
 });
 
-player.addEventListener("ended", async () => {
-  if (waitingForInterstitialToEnd && pendingStreamAfterInterstitial) {
-    const nextStream = pendingStreamAfterInterstitial;
-    waitingForInterstitialToEnd = false;
-    pendingStreamAfterInterstitial = "";
-
-    await setSourceAndMaybePlay(nextStream, true, "Laen uut striimi...");
-    return;
+player.addEventListener("ended", () => {
+  if (!switchingWithInterstitial) {
+    setPlayingUI(false);
   }
-
-  setPlayingUI(false);
 });
 
 player.addEventListener("waiting", () => {
-  streamStatus.textContent = waitingForInterstitialToEnd
-    ? "Laen vaheklippi..."
-    : "Laen striimi...";
+  if (!switchingWithInterstitial) {
+    streamStatus.textContent = "Laen striimi...";
+  }
 });
 
 player.addEventListener("stalled", () => {
-  streamStatus.textContent = "Striim jäi seisma";
+  if (!switchingWithInterstitial) {
+    streamStatus.textContent = "Striim jäi seisma";
+  }
 });
 
 player.addEventListener("error", () => {
-  waitingForInterstitialToEnd = false;
-  pendingStreamAfterInterstitial = "";
-  setPlayingUI(false);
-  streamStatus.textContent = "Ei saa striimi laadida";
+  if (!switchingWithInterstitial) {
+    setPlayingUI(false);
+    streamStatus.textContent = "Ei saa striimi laadida";
+  }
 });
 
 loadState();
