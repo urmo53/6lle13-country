@@ -18,20 +18,17 @@ const INTERSTITIAL_MP3_URL = "/vaheklipp.mp3";
 
 const DEFAULT_STREAM_VOLUME = 0.92;
 const FALLBACK_STREAM_VOLUME = 1.0;
-
-const INTERSTITIAL_COOLDOWN = 30000; // 30 sekundit
+const INTERSTITIAL_COOLDOWN = 30000;
 
 let defaultPlaybackUrl = "";
 let activePlaybackUrl = "";
+let desiredPlaybackUrl = "";
 let isPlaying = false;
 
-let specialModeActive = false;
-let interstitialPlayedForCurrentTrigger = false;
-let switchingWithInterstitial = false;
 let interstitialAudio = null;
-
-let latestShouldUseFallback = false;
+let switchingWithInterstitial = false;
 let lastInterstitialTime = 0;
+let latestShouldUseFallback = false;
 
 function fadeVolume(audio, from, to, duration = 1000) {
   return new Promise((resolve) => {
@@ -42,10 +39,9 @@ function fadeVolume(audio, from, to, duration = 1000) {
     audio.volume = from;
 
     const interval = setInterval(() => {
-      currentStep++;
+      currentStep += 1;
       const progress = currentStep / steps;
       const value = from + (to - from) * progress;
-
       audio.volume = Math.max(0, Math.min(1, value));
 
       if (currentStep >= steps) {
@@ -78,6 +74,11 @@ function setPlayingUI(playing, statusText) {
     statusText || (playing ? "Striim mängib" : "Striim peatatud");
 }
 
+function getTargetVolume(url) {
+  if (!url) return 1;
+  return url === defaultPlaybackUrl ? DEFAULT_STREAM_VOLUME : FALLBACK_STREAM_VOLUME;
+}
+
 function stopInterstitial() {
   if (!interstitialAudio) return;
 
@@ -89,19 +90,16 @@ function stopInterstitial() {
   interstitialAudio = null;
 }
 
-function getTargetVolume(url) {
-  if (!url) return 1;
-  return url === defaultPlaybackUrl ? DEFAULT_STREAM_VOLUME : FALLBACK_STREAM_VOLUME;
-}
-
-async function playMainStream(url, forcePlay = true) {
+async function switchMainPlayerTo(url, forcePlay = true) {
   if (!url) return;
 
-  const isSwitching = player.src && player.src !== url;
+  const wasPlaying = isPlaying || (!player.paused && !!player.src);
+  const shouldPlay = forcePlay || wasPlaying;
+  const isSwitching = !!player.src && player.src !== url;
 
   if (isSwitching && !player.paused) {
     try {
-      await fadeVolume(player, player.volume || 1, 0, 500);
+      await fadeVolume(player, player.volume || getTargetVolume(activePlaybackUrl), 0, 500);
     } catch (_) {}
   }
 
@@ -112,47 +110,51 @@ async function playMainStream(url, forcePlay = true) {
     player.load();
   }
 
-  if (!forcePlay) {
+  if (!shouldPlay) {
     player.volume = getTargetVolume(url);
     return;
   }
 
   try {
-    const targetVolume = getTargetVolume(url);
     player.volume = 0;
     setPlayingUI(true, "Laen striimi...");
     await player.play();
-    await fadeVolume(player, 0, targetVolume, 1000);
+    await fadeVolume(player, 0, getTargetVolume(url), 1000);
     setPlayingUI(true, "Striim mängib");
   } catch (_) {
     setPlayingUI(false, "Ei saa striimi laadida");
   }
 }
 
-async function playAfterInterstitial() {
-  const targetUrl = latestShouldUseFallback
-    ? FALLBACK_PLAYBACK_URL
-    : defaultPlaybackUrl;
-
-  await playMainStream(targetUrl, true);
+function getCurrentDesiredUrl() {
+  if (!defaultPlaybackUrl) return "";
+  return latestShouldUseFallback ? FALLBACK_PLAYBACK_URL : defaultPlaybackUrl;
 }
 
-async function playInterstitialThenSwitch() {
-  const now = Date.now();
+async function finishInterstitialAndGoToDesired() {
+  switchingWithInterstitial = false;
+  stopInterstitial();
 
-  if (switchingWithInterstitial) return;
-
-  if (now - lastInterstitialTime < INTERSTITIAL_COOLDOWN) {
-    const targetUrl = latestShouldUseFallback
-      ? FALLBACK_PLAYBACK_URL
-      : defaultPlaybackUrl;
-
-    await playMainStream(targetUrl, true);
+  const targetUrl = getCurrentDesiredUrl();
+  if (!targetUrl) {
+    setPlayingUI(false, "Striim peatatud");
     return;
   }
 
-  lastInterstitialTime = now;
+  await switchMainPlayerTo(targetUrl, true);
+}
+
+async function playInterstitialBeforeSwitch() {
+  if (switchingWithInterstitial) return;
+
   switchingWithInterstitial = true;
+  lastInterstitialTime = Date.now();
+
+  try {
+    if (!player.paused) {
+      await fadeVolume(player, player.volume || getTargetVolume(activePlaybackUrl), 0, 300);
+    }
+  } catch (_) {}
 
   try {
     player.pause();
@@ -166,9 +168,7 @@ async function playInterstitialThenSwitch() {
   interstitialAudio.addEventListener(
     "ended",
     async () => {
-      stopInterstitial();
-      switchingWithInterstitial = false;
-      await playAfterInterstitial();
+      await finishInterstitialAndGoToDesired();
     },
     { once: true }
   );
@@ -176,9 +176,7 @@ async function playInterstitialThenSwitch() {
   interstitialAudio.addEventListener(
     "error",
     async () => {
-      stopInterstitial();
-      switchingWithInterstitial = false;
-      await playAfterInterstitial();
+      await finishInterstitialAndGoToDesired();
     },
     { once: true }
   );
@@ -187,26 +185,25 @@ async function playInterstitialThenSwitch() {
     setPlayingUI(true, "Mängin vaheklippi...");
     await interstitialAudio.play();
   } catch (_) {
-    stopInterstitial();
-    switchingWithInterstitial = false;
-    await playAfterInterstitial();
+    await finishInterstitialAndGoToDesired();
   }
 }
 
-async function switchToNormalStreamIfNeeded() {
-  if (!defaultPlaybackUrl) return;
+async function maybeSwitchToDesiredStream() {
+  const targetUrl = getCurrentDesiredUrl();
+  if (!targetUrl) return;
   if (switchingWithInterstitial) return;
-  if (activePlaybackUrl === defaultPlaybackUrl) return;
+  if (activePlaybackUrl === targetUrl) return;
 
-  stopInterstitial();
-  await playInterstitialThenSwitch();
-}
+  const now = Date.now();
+  const cooldownActive = now - lastInterstitialTime < INTERSTITIAL_COOLDOWN;
 
-async function switchToFallbackWithInterstitialIfNeeded() {
-  if (switchingWithInterstitial) return;
-  if (activePlaybackUrl === FALLBACK_PLAYBACK_URL && !interstitialAudio) return;
+  if (cooldownActive) {
+    await switchMainPlayerTo(targetUrl, isPlaying);
+    return;
+  }
 
-  await playInterstitialThenSwitch();
+  await playInterstitialBeforeSwitch();
 }
 
 async function loadState() {
@@ -219,6 +216,9 @@ async function loadState() {
       if (!activePlaybackUrl) {
         activePlaybackUrl = defaultPlaybackUrl;
       }
+      if (!desiredPlaybackUrl) {
+        desiredPlaybackUrl = defaultPlaybackUrl;
+      }
     }
 
     if (data.current) {
@@ -227,34 +227,11 @@ async function loadState() {
       trackArtist.textContent = data.current.artist || "";
       mainCover.src = data.current.imageUrl || "/pilt.png";
 
-      const useFallback = shouldUseFallbackStream(data.current);
-      latestShouldUseFallback = useFallback;
-
-      if (useFallback) {
-        if (!specialModeActive) {
-          specialModeActive = true;
-          interstitialPlayedForCurrentTrigger = false;
-        }
-
-        if (!interstitialPlayedForCurrentTrigger) {
-          interstitialPlayedForCurrentTrigger = true;
-          await switchToFallbackWithInterstitialIfNeeded();
-        } else if (
-          !switchingWithInterstitial &&
-          activePlaybackUrl !== FALLBACK_PLAYBACK_URL
-        ) {
-          await playInterstitialThenSwitch();
-        }
-      } else {
-        specialModeActive = false;
-        interstitialPlayedForCurrentTrigger = false;
-
-        if (!switchingWithInterstitial) {
-          await switchToNormalStreamIfNeeded();
-        }
-      }
+      latestShouldUseFallback = shouldUseFallbackStream(data.current);
+      desiredPlaybackUrl = getCurrentDesiredUrl();
     } else {
       latestShouldUseFallback = false;
+      desiredPlaybackUrl = defaultPlaybackUrl;
       trackTitle.textContent = "Laen...";
       trackArtist.textContent = "";
       mainCover.src = "/pilt.png";
@@ -274,6 +251,8 @@ async function loadState() {
     if (data.error && !data.current) {
       streamStatus.textContent = data.error;
     }
+
+    await maybeSwitchToDesiredStream();
   } catch (_) {
     trackTitle.textContent = "Andmete laadimine ebaõnnestus";
     trackArtist.textContent = "";
@@ -288,12 +267,12 @@ playButton.addEventListener("click", async () => {
       interstitialAudio.pause();
       stopInterstitial();
       switchingWithInterstitial = false;
-      setPlayingUI(false);
+      setPlayingUI(false, "Striim peatatud");
       return;
     }
 
     if (!player.src) {
-      const initialUrl = activePlaybackUrl || defaultPlaybackUrl;
+      const initialUrl = activePlaybackUrl || desiredPlaybackUrl || defaultPlaybackUrl;
       if (initialUrl) {
         player.src = initialUrl;
         activePlaybackUrl = initialUrl;
